@@ -54,8 +54,10 @@ func (s Server) Listen(port string) {
 					fmt.Fprintln(os.Stderr, err)
 					break
 				}
+				//fmt.Println("received: ", msg)
 				// parse message
 				packet := Load(msg)
+				// call packet handler
 				if s.packetHandler != nil {
 					var handler = *(s.packetHandler)
 					handler(conn, *packet)
@@ -66,11 +68,13 @@ func (s Server) Listen(port string) {
 }
 
 func (s Server) Write(conn net.Conn, p Packet) {
-	err := wsutil.WriteServerMessage(conn, ws.OpBinary, p.Build())
+	msg := p.Build()
+	err := wsutil.WriteServerMessage(conn, ws.OpBinary, msg)
 	if err != nil {
 		// handle write error
 		fmt.Fprintln(os.Stderr, err)
 	}
+	//fmt.Println("sending: ", msg)
 }
 
 func (s Server) Broadcast(p Packet) {

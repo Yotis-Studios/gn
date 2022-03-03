@@ -3,9 +3,9 @@ package gn
 import (
 	"bytes"
 	"encoding/binary"
+	"fmt"
 	"io"
 	"math"
-	"sort"
 )
 
 type undefined interface{}
@@ -19,6 +19,9 @@ func BytesFromData(data interface{}) []byte {
 	var dataType = DetermineType(data)
 	var typeName = typeMap[dataType]
 
+	fmt.Println("dataType:", dataType)
+	fmt.Println("typeName:", typeName)
+
 	var buf = new(bytes.Buffer)
 	err := binary.Write(buf, binary.LittleEndian, uint8(dataType))
 	if err != nil {
@@ -27,10 +30,27 @@ func BytesFromData(data interface{}) []byte {
 
 	if typeName == "string" {
 		// String
-		err = binary.Write(buf, binary.LittleEndian, data.(string))
+		str := data.(string)
+		strSize := len(str) + 1
+		err = binary.Write(buf, binary.LittleEndian, uint8(strSize))
+		if err != nil {
+			panic(err)
+		}
+		err = binary.Write(buf, binary.LittleEndian, []byte(str))
+		if err != nil {
+			panic(err)
+		}
+		// write null terminator
+		err = binary.Write(buf, binary.LittleEndian, uint8(0))
 	} else if typeName == "buffer" {
-		// Buffer
-		err = binary.Write(buf, binary.LittleEndian, data.([]byte))
+		// Buffer array
+		arr := data.([]byte)
+		arrSize := len(arr)
+		err = binary.Write(buf, binary.LittleEndian, uint8(arrSize))
+		if err != nil {
+			panic(err)
+		}
+		err = binary.Write(buf, binary.LittleEndian, arr)
 	} else {
 		// Number
 		switch typeName {
@@ -70,40 +90,43 @@ func BytesFromData(data interface{}) []byte {
 }
 
 func DetermineType(data interface{}) int {
+	fmt.Printf("datatype: %T\n", data)
 	switch data.(type) {
 	// case undefined:
 	// 	return sort.StringSlice(typeMap).Search("undefined")
 	case string:
-		return sort.StringSlice(typeMap).Search("string")
+		return 9 // string
 	case []byte:
-		return sort.StringSlice(typeMap).Search("buffer")
+		return 10 // buffer
 	case int:
 		val := data.(int)
 		absVal := math.Abs(float64(val))
 		if val < 0 {
 			// signed
 			if absVal <= 127 {
-				return sort.StringSlice(typeMap).Search("s8")
+				return 3 // s8
 			} else if absVal <= 32767 {
-				return sort.StringSlice(typeMap).Search("s16")
+				return 4 // s16
 			}
-			return sort.StringSlice(typeMap).Search("s32")
+			return 5 // s32
 		} else {
 			// unsigned
 			if val <= 255 {
-				return sort.StringSlice(typeMap).Search("u8")
+				return 0 // u8
 			} else if val <= 65535 {
-				return sort.StringSlice(typeMap).Search("u16")
+				return 1 // u16
 			}
-			return sort.StringSlice(typeMap).Search("u32")
+			return 2 // u32
 		}
 	case float32:
-		return sort.StringSlice(typeMap).Search("f32")
+		return 7 // f32
 	case float64:
-		return sort.StringSlice(typeMap).Search("f64")
+		return 8 // f64
+	case bool:
+		return 0 // u8
 	}
 
-	return sort.StringSlice(typeMap).Search("undefined")
+	return 11 // undefined
 }
 
 func Parse(r io.Reader, index int) (value interface{}, size int) {

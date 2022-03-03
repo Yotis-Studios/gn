@@ -3,6 +3,7 @@ package gn
 import (
 	"bytes"
 	"encoding/binary"
+	"fmt"
 )
 
 type Packet struct {
@@ -17,7 +18,16 @@ func NewPacket(netID uint16) *Packet {
 	return p
 }
 
-func (p Packet) Add(data interface{}) {
+func (p *Packet) Add(data interface{}) {
+	// type massaging
+	switch data.(type) {
+	case bool:
+		if data.(bool) {
+			data = 1
+		} else {
+			data = 0
+		}
+	}
 	p.data = append(p.data, data)
 }
 
@@ -36,6 +46,7 @@ func (p Packet) Build() []byte {
 
 	for _, data := range p.data {
 		b := BytesFromData(data)
+		fmt.Println(b)
 		buf.Write(b)
 		size += len(b)
 	}

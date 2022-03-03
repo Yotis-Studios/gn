@@ -58,6 +58,8 @@ func (s Server) Listen(port string) {
 					var handler = *(s.packetHandler)
 					handler(conn, *packet)
 				}
+
+				fmt.Println("Packet:", packet)
 			}
 		}()
 	}))

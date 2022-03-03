@@ -118,7 +118,7 @@ func Parse(r io.Reader, index int) (value interface{}, size int) {
 	fmt.Println("typeName:", typeName)
 
 	if typeName == "undefined" {
-		return new(undefined), 0
+		return *(new(undefined)), 0
 	}
 
 	switch typeName {
@@ -128,7 +128,7 @@ func Parse(r io.Reader, index int) (value interface{}, size int) {
 		if err != nil {
 			panic(err)
 		}
-		value = val
+		value = *val
 		break
 	case "u16":
 		val := new(uint16)
@@ -136,7 +136,7 @@ func Parse(r io.Reader, index int) (value interface{}, size int) {
 		if err != nil {
 			panic(err)
 		}
-		value = val
+		value = *val
 		break
 	case "u32":
 		val := new(uint32)
@@ -144,7 +144,7 @@ func Parse(r io.Reader, index int) (value interface{}, size int) {
 		if err != nil {
 			panic(err)
 		}
-		value = val
+		value = *val
 		break
 	case "s8":
 		val := new(int8)
@@ -152,7 +152,7 @@ func Parse(r io.Reader, index int) (value interface{}, size int) {
 		if err != nil {
 			panic(err)
 		}
-		value = val
+		value = *val
 		break
 	case "s16":
 		val := new(int16)
@@ -160,7 +160,7 @@ func Parse(r io.Reader, index int) (value interface{}, size int) {
 		if err != nil {
 			panic(err)
 		}
-		value = val
+		value = *val
 		break
 	case "s32":
 		val := new(int32)
@@ -168,7 +168,7 @@ func Parse(r io.Reader, index int) (value interface{}, size int) {
 		if err != nil {
 			panic(err)
 		}
-		value = val
+		value = *val
 		break
 	case "f32":
 		val := new(float32)
@@ -176,7 +176,7 @@ func Parse(r io.Reader, index int) (value interface{}, size int) {
 		if err != nil {
 			panic(err)
 		}
-		value = val
+		value = *val
 		break
 	case "f64":
 		val := new(float64)
@@ -184,11 +184,11 @@ func Parse(r io.Reader, index int) (value interface{}, size int) {
 		if err != nil {
 			panic(err)
 		}
-		value = val
+		value = *val
 		break
 	case "string":
 		val := new(string)
-		err = binary.Read(r, binary.LittleEndian, val)
+		err = binary.Read(r, binary.LittleEndian, *val)
 		if err != nil {
 			panic(err)
 		}
@@ -200,7 +200,8 @@ func Parse(r io.Reader, index int) (value interface{}, size int) {
 		if err != nil {
 			panic(err)
 		}
-		value = val
+		buf := *val
+		value = buf
 		break
 	}
 	// if err != nil {
@@ -215,8 +216,15 @@ func Parse(r io.Reader, index int) (value interface{}, size int) {
 	} else {
 		size = sizeMap[typeName]
 	}
-	if typeName == "f32" || typeName == "f64" {
-		value = math.Round(value.(float64)*100) / 100
+
+	if typeName == "f32" {
+		flt := value.(float32)
+		value = math.Round(float64(flt)*100) / 100
+	}
+
+	if typeName == "f64" {
+		flt := value.(float64)
+		value = math.Round(flt*100) / 100
 	}
 
 	return value, size

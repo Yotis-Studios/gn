@@ -51,22 +51,40 @@ func BytesFromData(data interface{}) []byte {
 		// Number
 		switch typeName {
 		case "u8":
-			u8 := data.(uint8)
+			u8, ok := data.(uint8)
+			if !ok {
+				u8 = uint8(data.(int))
+			}
 			err = binary.Write(buf, binary.LittleEndian, uint8(u8))
 		case "u16":
-			u16 := data.(uint16)
+			u16, ok := data.(uint16)
+			if !ok {
+				u16 = uint16(data.(int))
+			}
 			err = binary.Write(buf, binary.LittleEndian, uint16(u16))
 		case "u32":
-			u32 := data.(uint32)
+			u32, ok := data.(uint32)
+			if !ok {
+				u32 = uint32(data.(int))
+			}
 			err = binary.Write(buf, binary.LittleEndian, uint32(u32))
 		case "s8":
-			s8 := data.(int8)
+			s8, ok := data.(int8)
+			if !ok {
+				s8 = int8(data.(int))
+			}
 			err = binary.Write(buf, binary.LittleEndian, int8(s8))
 		case "s16":
-			s16 := data.(int16)
+			s16, ok := data.(int16)
+			if !ok {
+				s16 = int16(data.(int))
+			}
 			err = binary.Write(buf, binary.LittleEndian, int16(s16))
 		case "s32":
-			s32 := data.(int32)
+			s32, ok := data.(int32)
+			if !ok {
+				s32 = int32(data.(int))
+			}
 			err = binary.Write(buf, binary.LittleEndian, int32(s32))
 		case "f32":
 			f32 := data.(float32)
@@ -134,7 +152,7 @@ func DetermineType(data interface{}) int {
 	return 11 // undefined
 }
 
-func Parse(r io.Reader, index int) (value interface{}, size int) {
+func Parse(r io.Reader) (value interface{}, size int) {
 	var typeIdx uint8
 	err := binary.Read(r, binary.LittleEndian, &typeIdx)
 	if err != nil {

@@ -76,7 +76,7 @@ func Load(b []byte) *Packet {
 	if n > 4 {
 		j := 4
 		for j < n {
-			value, size := Parse(r, j)
+			value, size := Parse(r)
 			p.data = append(p.data, value)
 			j += size + 1
 		}

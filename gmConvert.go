@@ -125,94 +125,60 @@ func Parse(r io.Reader, index int) (value interface{}, size int) {
 	case "u8":
 		val := new(uint8)
 		err = binary.Read(r, binary.LittleEndian, val)
-		if err != nil {
-			panic(err)
-		}
 		value = *val
-		break
 	case "u16":
 		val := new(uint16)
 		err = binary.Read(r, binary.LittleEndian, val)
-		if err != nil {
-			panic(err)
-		}
 		value = *val
-		break
 	case "u32":
 		val := new(uint32)
 		err = binary.Read(r, binary.LittleEndian, val)
-		if err != nil {
-			panic(err)
-		}
 		value = *val
-		break
 	case "s8":
 		val := new(int8)
 		err = binary.Read(r, binary.LittleEndian, val)
-		if err != nil {
-			panic(err)
-		}
 		value = *val
-		break
 	case "s16":
 		val := new(int16)
 		err = binary.Read(r, binary.LittleEndian, val)
-		if err != nil {
-			panic(err)
-		}
 		value = *val
-		break
 	case "s32":
 		val := new(int32)
 		err = binary.Read(r, binary.LittleEndian, val)
-		if err != nil {
-			panic(err)
-		}
 		value = *val
-		break
 	case "f32":
 		val := new(float32)
 		err = binary.Read(r, binary.LittleEndian, val)
-		if err != nil {
-			panic(err)
-		}
 		value = *val
-		break
 	case "f64":
 		val := new(float64)
 		err = binary.Read(r, binary.LittleEndian, val)
-		if err != nil {
-			panic(err)
-		}
 		value = *val
-		break
 	case "string":
-		val := new(string)
-		err = binary.Read(r, binary.LittleEndian, *val)
-		if err != nil {
-			panic(err)
-		}
-		value = val
-		break
+		fallthrough
 	case "buffer":
-		val := new([]byte)
-		err = binary.Read(r, binary.LittleEndian, val)
+		bufSize := new(uint8)
+		err = binary.Read(r, binary.LittleEndian, bufSize)
 		if err != nil {
 			panic(err)
 		}
-		buf := *val
-		value = buf
-		break
+		val := make([]byte, *bufSize)
+		err = binary.Read(r, binary.LittleEndian, &val)
+		value = val
 	}
-	// if err != nil {
-	// 	panic(err)
-	// }
+	if err != nil {
+		panic(err)
+	}
+	fmt.Println(value)
 
 	size = 0
 	if typeName == "string" {
-		size = len(value.([]rune)) + 1
+		str := string(value.([]byte))
+		value = str
+		size = len(str) + 2
 	} else if typeName == "buffer" {
-		size = len(value.([]byte))
+		fmt.Println(value)
+		size = len(value.([]byte)) + 1
 	} else {
 		size = sizeMap[typeName]
 	}

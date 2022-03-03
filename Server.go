@@ -36,6 +36,8 @@ func (s Server) Listen(port string) {
 		}
 		// add new connection to list
 		s.connections = append(s.connections, conn)
+		// TODO: call connect handler
+		fmt.Println("Connected")
 
 		// start goroutine to handle connection
 		go func() {

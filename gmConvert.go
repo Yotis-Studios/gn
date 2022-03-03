@@ -71,8 +71,8 @@ func BytesFromData(data interface{}) []byte {
 
 func DetermineType(data interface{}) int {
 	switch data.(type) {
-	case undefined:
-		return sort.StringSlice(typeMap).Search("undefined")
+	// case undefined:
+	// 	return sort.StringSlice(typeMap).Search("undefined")
 	case string:
 		return sort.StringSlice(typeMap).Search("string")
 	case []byte:
@@ -97,7 +97,6 @@ func DetermineType(data interface{}) int {
 			}
 			return sort.StringSlice(typeMap).Search("u32")
 		}
-		return sort.StringSlice(typeMap).Search("u8")
 	case float32:
 		return sort.StringSlice(typeMap).Search("f32")
 	case float64:

@@ -1,4 +1,4 @@
-module github.com/yotis-studios/gn
+module github.com/Yotis-Studios/gn
 
 go 1.17
 

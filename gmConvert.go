@@ -3,6 +3,7 @@ package gn
 import (
 	"bytes"
 	"encoding/binary"
+	"fmt"
 	"io"
 	"math"
 	"sort"
@@ -113,6 +114,8 @@ func Parse(r io.Reader, index int) (value interface{}, size int) {
 		panic(err)
 	}
 	typeName := typeMap[int(typeIdx)]
+	fmt.Println("typeIdx:", typeIdx)
+	fmt.Println("typeName:", typeName)
 
 	if typeName == "undefined" {
 		return new(undefined), 0
@@ -120,49 +123,89 @@ func Parse(r io.Reader, index int) (value interface{}, size int) {
 
 	switch typeName {
 	case "u8":
-		value = new(uint8)
-		err = binary.Read(r, binary.LittleEndian, &value)
+		val := new(uint8)
+		err = binary.Read(r, binary.LittleEndian, val)
+		if err != nil {
+			panic(err)
+		}
+		value = val
 		break
 	case "u16":
-		value = new(uint16)
-		err = binary.Read(r, binary.LittleEndian, &value)
+		val := new(uint16)
+		err = binary.Read(r, binary.LittleEndian, val)
+		if err != nil {
+			panic(err)
+		}
+		value = val
 		break
 	case "u32":
-		value = new(uint32)
-		err = binary.Read(r, binary.LittleEndian, &value)
+		val := new(uint32)
+		err = binary.Read(r, binary.LittleEndian, val)
+		if err != nil {
+			panic(err)
+		}
+		value = val
 		break
 	case "s8":
-		value = new(int8)
-		err = binary.Read(r, binary.LittleEndian, &value)
+		val := new(int8)
+		err = binary.Read(r, binary.LittleEndian, val)
+		if err != nil {
+			panic(err)
+		}
+		value = val
 		break
 	case "s16":
-		value = new(int16)
-		err = binary.Read(r, binary.LittleEndian, &value)
+		val := new(int16)
+		err = binary.Read(r, binary.LittleEndian, val)
+		if err != nil {
+			panic(err)
+		}
+		value = val
 		break
 	case "s32":
-		value = new(int32)
-		err = binary.Read(r, binary.LittleEndian, &value)
+		val := new(int32)
+		err = binary.Read(r, binary.LittleEndian, val)
+		if err != nil {
+			panic(err)
+		}
+		value = val
 		break
 	case "f32":
-		value = new(float32)
-		err = binary.Read(r, binary.LittleEndian, &value)
+		val := new(float32)
+		err = binary.Read(r, binary.LittleEndian, val)
+		if err != nil {
+			panic(err)
+		}
+		value = val
 		break
 	case "f64":
-		value = new(float64)
-		err = binary.Read(r, binary.LittleEndian, &value)
+		val := new(float64)
+		err = binary.Read(r, binary.LittleEndian, val)
+		if err != nil {
+			panic(err)
+		}
+		value = val
 		break
 	case "string":
-		value = new(string)
-		err = binary.Read(r, binary.LittleEndian, &value)
+		val := new(string)
+		err = binary.Read(r, binary.LittleEndian, val)
+		if err != nil {
+			panic(err)
+		}
+		value = val
 		break
 	case "buffer":
-		value = new([]byte)
-		err = binary.Read(r, binary.LittleEndian, &value)
+		val := new([]byte)
+		err = binary.Read(r, binary.LittleEndian, val)
+		if err != nil {
+			panic(err)
+		}
+		value = val
 		break
 	}
-	if err != nil {
-		panic(err)
-	}
+	// if err != nil {
+	// 	panic(err)
+	// }
 
 	size = 0
 	if typeName == "string" {

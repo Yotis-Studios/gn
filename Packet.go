@@ -53,7 +53,12 @@ func (p Packet) Build() []byte {
 func Load(b []byte) *Packet {
 	p := new(Packet)
 	r := bytes.NewReader(b)
-	err := binary.Read(r, binary.LittleEndian, &p.netID)
+	var pSize uint16
+	err := binary.Read(r, binary.LittleEndian, &pSize)
+	if err != nil {
+		panic(err)
+	}
+	err = binary.Read(r, binary.LittleEndian, &p.netID)
 	if err != nil {
 		panic(err)
 	}
@@ -64,7 +69,7 @@ func Load(b []byte) *Packet {
 		for j < n {
 			value, size := Parse(r, j)
 			p.data = append(p.data, value)
-			j += size
+			j += size + 1
 		}
 	}
 

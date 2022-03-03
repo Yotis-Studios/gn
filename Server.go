@@ -52,9 +52,12 @@ func (s Server) Listen(port string) {
 					break
 				}
 				// parse message
+				fmt.Println(msg)
 				packet := Load(msg)
-				var handler = *(s.packetHandler)
-				handler(conn, *packet)
+				if s.packetHandler != nil {
+					var handler = *(s.packetHandler)
+					handler(conn, *packet)
+				}
 			}
 		}()
 	}))

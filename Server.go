@@ -36,8 +36,11 @@ func (s Server) Listen(port string) {
 		}
 		// add new connection to list
 		s.connections = append(s.connections, conn)
-		// TODO: call connect handler
-		fmt.Println("Connected")
+		// call connect handler
+		if s.connectHandler != nil {
+			(*s.connectHandler)(conn)
+		}
+		//fmt.Println("Client Connected")
 
 		// start goroutine to handle connection
 		go func() {
@@ -52,14 +55,11 @@ func (s Server) Listen(port string) {
 					break
 				}
 				// parse message
-				fmt.Println(msg)
 				packet := Load(msg)
 				if s.packetHandler != nil {
 					var handler = *(s.packetHandler)
 					handler(conn, *packet)
 				}
-
-				fmt.Println("Packet:", packet)
 			}
 		}()
 	}))
@@ -84,22 +84,22 @@ func (s Server) Broadcast(p Packet) {
 	}
 }
 
-func (s Server) OnConnect(handler ConnectHandler) {
+func (s *Server) OnConnect(handler ConnectHandler) {
 	s.connectHandler = &handler
 }
 
-func (s Server) OnDisconnect(handler DisconnectHandler) {
+func (s *Server) OnDisconnect(handler DisconnectHandler) {
 	s.disconnectHandler = &handler
 }
 
-func (s Server) OnData(handler PacketHandler) {
+func (s *Server) OnData(handler PacketHandler) {
 	s.packetHandler = &handler
 }
 
-func (s Server) OnError(handler ErrorHandler) {
+func (s *Server) OnError(handler ErrorHandler) {
 	s.errorHandler = &handler
 }
 
-func (s Server) OnClose(handler CloseHandler) {
+func (s *Server) OnClose(handler CloseHandler) {
 	s.closeHandler = &handler
 }

@@ -51,22 +51,22 @@ func BytesFromData(data interface{}) []byte {
 		// Number
 		switch typeName {
 		case "u8":
-			u8 := data.(int)
+			u8 := data.(uint8)
 			err = binary.Write(buf, binary.LittleEndian, uint8(u8))
 		case "u16":
-			u16 := data.(int)
+			u16 := data.(uint16)
 			err = binary.Write(buf, binary.LittleEndian, uint16(u16))
 		case "u32":
-			u32 := data.(int)
+			u32 := data.(uint32)
 			err = binary.Write(buf, binary.LittleEndian, uint32(u32))
 		case "s8":
-			s8 := data.(int)
+			s8 := data.(int8)
 			err = binary.Write(buf, binary.LittleEndian, int8(s8))
 		case "s16":
-			s16 := data.(int)
+			s16 := data.(int16)
 			err = binary.Write(buf, binary.LittleEndian, int16(s16))
 		case "s32":
-			s32 := data.(int)
+			s32 := data.(int32)
 			err = binary.Write(buf, binary.LittleEndian, int32(s32))
 		case "f32":
 			f32 := data.(float32)

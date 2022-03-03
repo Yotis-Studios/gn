@@ -3,7 +3,6 @@ package gn
 import (
 	"bytes"
 	"encoding/binary"
-	"fmt"
 	"io"
 	"math"
 )
@@ -18,9 +17,6 @@ var sizeMap = map[string]int{"u8": 1, "u16": 2, "u32": 4, "s8": 1, "s16": 2, "s3
 func BytesFromData(data interface{}) []byte {
 	var dataType = DetermineType(data)
 	var typeName = typeMap[dataType]
-
-	fmt.Println("dataType:", dataType)
-	fmt.Println("typeName:", typeName)
 
 	var buf = new(bytes.Buffer)
 	err := binary.Write(buf, binary.LittleEndian, uint8(dataType))
@@ -90,10 +86,7 @@ func BytesFromData(data interface{}) []byte {
 }
 
 func DetermineType(data interface{}) int {
-	fmt.Printf("datatype: %T\n", data)
 	switch data.(type) {
-	// case undefined:
-	// 	return sort.StringSlice(typeMap).Search("undefined")
 	case string:
 		return 9 // string
 	case []byte:

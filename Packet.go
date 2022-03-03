@@ -3,7 +3,6 @@ package gn
 import (
 	"bytes"
 	"encoding/binary"
-	"fmt"
 )
 
 type Packet struct {
@@ -46,7 +45,6 @@ func (p Packet) Build() []byte {
 
 	for _, data := range p.data {
 		b := BytesFromData(data)
-		fmt.Println(b)
 		buf.Write(b)
 		size += len(b)
 	}

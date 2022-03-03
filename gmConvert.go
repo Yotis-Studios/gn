@@ -27,7 +27,7 @@ func BytesFromData(data interface{}) []byte {
 	if typeName == "string" {
 		// String
 		str := data.(string)
-		strSize := len(str) + 1
+		strSize := len(str)
 		err = binary.Write(buf, binary.LittleEndian, uint8(strSize))
 		if err != nil {
 			panic(err)
@@ -37,7 +37,7 @@ func BytesFromData(data interface{}) []byte {
 			panic(err)
 		}
 		// write null terminator
-		err = binary.Write(buf, binary.LittleEndian, uint8(0))
+		//err = binary.Write(buf, binary.LittleEndian, uint8(0))
 	} else if typeName == "buffer" {
 		// Buffer array
 		arr := data.([]byte)

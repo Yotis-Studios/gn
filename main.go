@@ -22,7 +22,7 @@ func main() {
 
 			for {
 				msg, op, err := wsutil.ReadClientData(conn)
-				fmt.Println(msg)
+				fmt.Println(op)
 				if err != nil {
 					// handle read error
 					fmt.Fprintln(os.Stderr, err)

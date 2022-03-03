@@ -51,31 +51,31 @@ func BytesFromData(data interface{}) []byte {
 		// Number
 		switch typeName {
 		case "u8":
-			err = binary.Write(buf, binary.LittleEndian, uint8(data.(int)))
-			break
+			u8 := data.(int)
+			err = binary.Write(buf, binary.LittleEndian, uint8(u8))
 		case "u16":
-			err = binary.Write(buf, binary.LittleEndian, uint16(data.(int)))
-			break
+			u16 := data.(int)
+			err = binary.Write(buf, binary.LittleEndian, uint16(u16))
 		case "u32":
-			err = binary.Write(buf, binary.LittleEndian, uint32(data.(int)))
-			break
+			u32 := data.(int)
+			err = binary.Write(buf, binary.LittleEndian, uint32(u32))
 		case "s8":
-			err = binary.Write(buf, binary.LittleEndian, int8(data.(int)))
-			break
+			s8 := data.(int)
+			err = binary.Write(buf, binary.LittleEndian, int8(s8))
 		case "s16":
-			err = binary.Write(buf, binary.LittleEndian, int16(data.(int)))
-			break
+			s16 := data.(int)
+			err = binary.Write(buf, binary.LittleEndian, int16(s16))
 		case "s32":
-			err = binary.Write(buf, binary.LittleEndian, int32(data.(int)))
-			break
+			s32 := data.(int)
+			err = binary.Write(buf, binary.LittleEndian, int32(s32))
 		case "f32":
-			err = binary.Write(buf, binary.LittleEndian, float32(data.(float64)))
-			break
+			f32 := data.(float32)
+			err = binary.Write(buf, binary.LittleEndian, float32(f32))
 		case "f64":
-			err = binary.Write(buf, binary.LittleEndian, float64(data.(float64)))
-			break
+			f64 := data.(float64)
+			err = binary.Write(buf, binary.LittleEndian, float64(f64))
 		case "undefined":
-			break
+			// do nothing
 		}
 	}
 	if err != nil {
@@ -87,10 +87,20 @@ func BytesFromData(data interface{}) []byte {
 
 func DetermineType(data interface{}) int {
 	switch data.(type) {
-	case string:
-		return 9 // string
-	case []byte:
-		return 10 // buffer
+	case bool:
+		return 0 // u8
+	case uint8:
+		return 0 // u8
+	case uint16:
+		return 1 // u16
+	case uint32:
+		return 2 // u32
+	case int8:
+		return 3 // s8
+	case int16:
+		return 4 // s16
+	case int32:
+		return 5 // s32
 	case int:
 		val := data.(int)
 		absVal := math.Abs(float64(val))
@@ -111,14 +121,16 @@ func DetermineType(data interface{}) int {
 			}
 			return 2 // u32
 		}
+	// no f16 rip
 	case float32:
 		return 7 // f32
 	case float64:
 		return 8 // f64
-	case bool:
-		return 0 // u8
+	case string:
+		return 9 // string
+	case []byte:
+		return 10 // buffer
 	}
-
 	return 11 // undefined
 }
 

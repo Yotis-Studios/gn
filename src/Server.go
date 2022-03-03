@@ -58,18 +58,18 @@ func (s Server) Listen(port string) {
 	}))
 }
 
-func (s Server) Write(conn net.Conn, msg []byte) {
-	err := wsutil.WriteServerMessage(conn, ws.OpBinary, msg)
+func (s Server) Write(conn net.Conn, p Packet) {
+	err := wsutil.WriteServerMessage(conn, ws.OpBinary, p.Build())
 	if err != nil {
 		// handle write error
 		fmt.Fprintln(os.Stderr, err)
 	}
 }
 
-func (s Server) Broadcast(msg []byte) {
+func (s Server) Broadcast(p Packet) {
 	// loop through all connections and send message
 	for _, conn := range s.connections {
-		err := wsutil.WriteServerMessage(conn, ws.OpBinary, msg)
+		err := wsutil.WriteServerMessage(conn, ws.OpBinary, p.Build())
 		if err != nil {
 			// handle write error
 			fmt.Fprintln(os.Stderr, err)

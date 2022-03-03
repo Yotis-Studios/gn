@@ -3,7 +3,6 @@ package gn
 import (
 	"bytes"
 	"encoding/binary"
-	"fmt"
 	"io"
 	"math"
 	"sort"
@@ -114,8 +113,6 @@ func Parse(r io.Reader, index int) (value interface{}, size int) {
 		panic(err)
 	}
 	typeName := typeMap[int(typeIdx)]
-	fmt.Println("typeIdx:", typeIdx)
-	fmt.Println("typeName:", typeName)
 
 	if typeName == "undefined" {
 		return *(new(undefined)), 0
@@ -169,7 +166,6 @@ func Parse(r io.Reader, index int) (value interface{}, size int) {
 	if err != nil {
 		panic(err)
 	}
-	fmt.Println(value)
 
 	size = 0
 	if typeName == "string" {
@@ -177,7 +173,6 @@ func Parse(r io.Reader, index int) (value interface{}, size int) {
 		value = str
 		size = len(str) + 2
 	} else if typeName == "buffer" {
-		fmt.Println(value)
 		size = len(value.([]byte)) + 1
 	} else {
 		size = sizeMap[typeName]

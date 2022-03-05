@@ -20,8 +20,11 @@ func NewConnection(conn net.Conn, serv Server) *Connection {
 }
 
 func (c Connection) Write(p Packet) error {
-	msg := p.Build()
-	err := wsutil.WriteServerMessage(c.conn, ws.OpBinary, msg)
+	msg, err := p.Build()
+	if err != nil {
+		return err
+	}
+	err = wsutil.WriteServerMessage(c.conn, ws.OpBinary, msg)
 	return err
 }
 

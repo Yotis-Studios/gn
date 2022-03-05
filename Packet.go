@@ -34,53 +34,63 @@ func (p Packet) Get(index int) interface{} {
 	return p.data[index]
 }
 
-func (p Packet) Build() []byte {
+func (p Packet) Build() ([]byte, error) {
 	var size = 0
 	var buf = new(bytes.Buffer)
+	// write packet id
 	err := binary.Write(buf, binary.LittleEndian, p.netID)
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
 	size += 2
 
+	// serialize and write data
 	for _, data := range p.data {
-		b := BytesFromData(data)
+		var b []byte
+		b, err = BytesFromData(data)
+		if err != nil {
+			return nil, err
+		}
 		buf.Write(b)
 		size += len(b)
 	}
 
+	// write packet size and packet to new buffer
 	var pBuf = new(bytes.Buffer)
 	err = binary.Write(pBuf, binary.LittleEndian, uint16(size))
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
 	pBuf.Write(buf.Bytes())
 
-	return pBuf.Bytes()
+	return pBuf.Bytes(), nil
 }
 
-func Load(b []byte) *Packet {
+func Load(b []byte) (*Packet, error) {
 	p := new(Packet)
 	r := bytes.NewReader(b)
 	var pSize uint16
 	err := binary.Read(r, binary.LittleEndian, &pSize)
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
 	err = binary.Read(r, binary.LittleEndian, &p.netID)
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
 
 	n := len(b)
 	if n > 4 {
 		j := 4
 		for j < n {
-			value, size := Parse(r)
+			value, size, parseErr := Parse(r)
+			if parseErr != nil {
+				return nil, parseErr
+			}
 			p.data = append(p.data, value)
 			j += size + 1
 		}
 	}
 
-	return p
+	return p, nil
 }

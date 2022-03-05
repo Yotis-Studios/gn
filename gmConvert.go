@@ -14,14 +14,17 @@ type undefined interface{}
 var typeMap = []string{"u8", "u16", "u32", "s8", "s16", "s32", "f16", "f32", "f64", "string", "buffer", "undefined"}
 var sizeMap = map[string]int{"u8": 1, "u16": 2, "u32": 4, "s8": 1, "s16": 2, "s32": 4, "f16": 2, "f32": 4, "f64": 8, "undefined": 0}
 
-func BytesFromData(data interface{}) []byte {
-	var dataType = DetermineType(data)
+func BytesFromData(data interface{}) ([]byte, error) {
+	var dataType, err = DetermineType(data)
+	if err != nil {
+		return nil, err
+	}
 	var typeName = typeMap[dataType]
 
 	var buf = new(bytes.Buffer)
-	err := binary.Write(buf, binary.LittleEndian, uint8(dataType))
+	err = binary.Write(buf, binary.LittleEndian, uint8(dataType))
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
 
 	if typeName == "string" {
@@ -30,11 +33,11 @@ func BytesFromData(data interface{}) []byte {
 		strSize := len(str)
 		err = binary.Write(buf, binary.LittleEndian, uint8(strSize))
 		if err != nil {
-			panic(err)
+			return nil, err
 		}
 		err = binary.Write(buf, binary.LittleEndian, []byte(str))
 		if err != nil {
-			panic(err)
+			return nil, err
 		}
 		// write null terminator
 		//err = binary.Write(buf, binary.LittleEndian, uint8(0))
@@ -44,7 +47,7 @@ func BytesFromData(data interface{}) []byte {
 		arrSize := len(arr)
 		err = binary.Write(buf, binary.LittleEndian, uint8(arrSize))
 		if err != nil {
-			panic(err)
+			return nil, err
 		}
 		err = binary.Write(buf, binary.LittleEndian, arr)
 	} else {
@@ -97,70 +100,70 @@ func BytesFromData(data interface{}) []byte {
 		}
 	}
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
 
-	return buf.Bytes()
+	return buf.Bytes(), nil
 }
 
-func DetermineType(data interface{}) int {
+func DetermineType(data interface{}) (int, error) {
 	switch data := data.(type) {
 	case bool:
-		return 0 // u8
+		return 0, nil // u8
 	case uint8:
-		return 0 // u8
+		return 0, nil // u8
 	case uint16:
-		return 1 // u16
+		return 1, nil // u16
 	case uint32:
-		return 2 // u32
+		return 2, nil // u32
 	case int8:
-		return 3 // s8
+		return 3, nil // s8
 	case int16:
-		return 4 // s16
+		return 4, nil // s16
 	case int32:
-		return 5 // s32
+		return 5, nil // s32
 	case int:
 		absVal := math.Abs(float64(data))
 		if data < 0 {
 			// signed
 			if absVal <= 127 {
-				return 3 // s8
+				return 3, nil // s8
 			} else if absVal <= 32767 {
-				return 4 // s16
+				return 4, nil // s16
 			}
-			return 5 // s32
+			return 5, nil // s32
 		} else {
 			// unsigned
 			if data <= 255 {
-				return 0 // u8
+				return 0, nil // u8
 			} else if data <= 65535 {
-				return 1 // u16
+				return 1, nil // u16
 			}
-			return 2 // u32
+			return 2, nil // u32
 		}
 	// no f16 rip
 	case float32:
-		return 7 // f32
+		return 7, nil // f32
 	case float64:
-		return 8 // f64
+		return 8, nil // f64
 	case string:
-		return 9 // string
+		return 9, nil // string
 	case []byte:
-		return 10 // buffer
+		return 10, nil // buffer
 	}
-	return 11 // undefined
+	return 11, nil // undefined
 }
 
-func Parse(r io.Reader) (value interface{}, size int) {
+func Parse(r io.Reader) (value interface{}, size int, err error) {
 	var typeIdx uint8
-	err := binary.Read(r, binary.LittleEndian, &typeIdx)
+	err = binary.Read(r, binary.LittleEndian, &typeIdx)
 	if err != nil {
-		panic(err)
+		return nil, 0, err
 	}
 	typeName := typeMap[int(typeIdx)]
 
 	if typeName == "undefined" {
-		return *(new(undefined)), 0
+		return *(new(undefined)), 0, nil
 	}
 
 	switch typeName {
@@ -202,21 +205,21 @@ func Parse(r io.Reader) (value interface{}, size int) {
 		bufSize := new(uint8)
 		err = binary.Read(r, binary.LittleEndian, bufSize)
 		if err != nil {
-			panic(err)
+			return nil, 0, err
 		}
 		val := make([]byte, *bufSize)
 		err = binary.Read(r, binary.LittleEndian, &val)
 		value = val
 	}
 	if err != nil {
-		panic(err)
+		return nil, 0, err
 	}
 
 	size = 0
 	if typeName == "string" {
 		str := string(value.([]byte))
 		value = str
-		size = len(str) + 2
+		size = len(str) + 2 // FIXME: includes size byte and null terminator?
 	} else if typeName == "buffer" {
 		size = len(value.([]byte)) + 1
 	} else {
@@ -233,5 +236,5 @@ func Parse(r io.Reader) (value interface{}, size int) {
 		value = math.Round(flt*100) / 100
 	}
 
-	return value, size
+	return value, size, nil
 }

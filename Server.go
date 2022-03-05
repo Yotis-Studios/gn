@@ -53,15 +53,20 @@ func (s Server) Listen(port string) error {
 
 			// loop and read data until an error is encountered
 			for {
-				msg, _, err := wsutil.ReadClientData(conn)
-				if err != nil {
+				msg, _, readErr := wsutil.ReadClientData(conn)
+				if readErr != nil {
 					// handle read error
 					fmt.Fprintln(os.Stderr, err)
 					break
 				}
 				//fmt.Println("received: ", msg)
 				// parse message
-				packet := Load(msg)
+				packet, parseErr := Load(msg)
+				if parseErr != nil {
+					// handle parse error
+					fmt.Fprintln(os.Stderr, err)
+					break
+				}
 				// call packet handler
 				if s.packetHandler != nil {
 					var handler = *(s.packetHandler)
@@ -93,8 +98,14 @@ func (s Server) Listen(port string) error {
 func (s Server) Broadcast(p Packet) error {
 	// loop through all connections and send message
 	for _, c := range s.connections {
-		err := wsutil.WriteServerMessage(c.conn, ws.OpBinary, p.Build())
-		return err
+		b, err := p.Build()
+		if err != nil {
+			return err
+		}
+		err = wsutil.WriteServerMessage(c.conn, ws.OpBinary, b)
+		if err != nil {
+			return err
+		}
 	}
 	return nil // no error
 }

@@ -36,9 +36,6 @@ func (p Packet) Get(index int) interface{} {
 }
 
 func (p Packet) Build() ([]byte, error) {
-	if p.raw != nil {
-		return p.raw, nil
-	}
 	var size = 0
 	var buf = new(bytes.Buffer)
 	// write packet id

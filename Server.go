@@ -1,20 +1,18 @@
 package gn
 
 import (
-	"fmt"
 	"net/http"
-	"os"
 
 	"github.com/gobwas/ws"
 	"github.com/gobwas/ws/wsutil"
 )
 
-type ReadyHandler func(serv Server)
-type ConnectHandler func(conn Connection)
-type DisconnectHandler func(conn Connection)
-type PacketHandler func(conn Connection, p Packet)
-type ErrorHandler func(conn Connection, err error)
-type CloseHandler func(serv Server)
+type ReadyHandler func(Server)
+type ConnectHandler func(Connection)
+type DisconnectHandler func(Connection)
+type PacketHandler func(Connection, Packet)
+type ErrorHandler func(ServerError)
+type CloseHandler func(Server)
 
 type Server struct {
 	connections       []Connection
@@ -33,8 +31,9 @@ func (s *Server) Listen(port string) error {
 		// upgrade http request to websocket
 		conn, _, _, err := ws.UpgradeHTTP(r, w)
 		if err != nil {
-			// TODO: handle connection error
-			fmt.Fprintln(os.Stderr, err)
+			if s.errorHandler != nil {
+				(*s.errorHandler)(ServerError{err, nil, s})
+			}
 			return
 		}
 		// add new connection to list
@@ -44,7 +43,6 @@ func (s *Server) Listen(port string) error {
 		if s.connectHandler != nil {
 			(*s.connectHandler)(c)
 		}
-		//fmt.Println("Client Connected")
 
 		// start goroutine to handle connection
 		// TODO: communicate with these routines via channels
@@ -56,21 +54,23 @@ func (s *Server) Listen(port string) error {
 				msg, _, readErr := wsutil.ReadClientData(conn)
 				if readErr != nil {
 					// handle read error
-					//fmt.Fprintln(os.Stderr, err)
+					if s.errorHandler != nil {
+						(*s.errorHandler)(ServerError{err, &c, s})
+					}
 					break
 				}
-				//fmt.Println("received: ", msg)
 				// parse message
 				packet, parseErr := Load(msg)
 				if parseErr != nil {
 					// handle parse error
-					fmt.Fprintln(os.Stderr, err)
+					if s.errorHandler != nil {
+						(*s.errorHandler)(ServerError{err, &c, s})
+					}
 					break
 				}
 				// call packet handler
 				if s.packetHandler != nil {
-					var handler = *(s.packetHandler)
-					handler(c, *packet)
+					(*s.packetHandler)(c, *packet)
 				}
 			}
 		}()
@@ -84,7 +84,6 @@ func (s *Server) Listen(port string) error {
 	}
 	err := serv.ListenAndServe()
 	if err == nil {
-		//fmt.Println("Server started on port: ", port)
 		s.port = p
 		s.serv = serv
 		// call ready handler

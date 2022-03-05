@@ -8,6 +8,7 @@ import (
 type Packet struct {
 	netID uint16
 	data  []interface{}
+	raw   []byte
 }
 
 func NewPacket(netID uint16) *Packet {
@@ -35,6 +36,9 @@ func (p Packet) Get(index int) interface{} {
 }
 
 func (p Packet) Build() ([]byte, error) {
+	if p.raw != nil {
+		return p.raw, nil
+	}
 	var size = 0
 	var buf = new(bytes.Buffer)
 	// write packet id
@@ -63,11 +67,14 @@ func (p Packet) Build() ([]byte, error) {
 	}
 	pBuf.Write(buf.Bytes())
 
-	return pBuf.Bytes(), nil
+	p.raw = pBuf.Bytes()
+
+	return p.raw, nil
 }
 
 func Load(b []byte) (*Packet, error) {
 	p := new(Packet)
+	p.raw = b
 	r := bytes.NewReader(b)
 	var pSize uint16
 	err := binary.Read(r, binary.LittleEndian, &pSize)

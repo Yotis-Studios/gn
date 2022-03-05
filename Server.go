@@ -2,7 +2,6 @@ package gn
 
 import (
 	"fmt"
-	"net"
 	"net/http"
 	"os"
 
@@ -10,14 +9,18 @@ import (
 	"github.com/gobwas/ws/wsutil"
 )
 
-type ConnectHandler func(conn net.Conn)
-type DisconnectHandler func(conn net.Conn)
-type PacketHandler func(conn net.Conn, p Packet)
-type ErrorHandler func(conn net.Conn, err error)
-type CloseHandler func(conn net.Conn)
+type ReadyHandler func(serv Server)
+type ConnectHandler func(conn Connection)
+type DisconnectHandler func(conn Connection)
+type PacketHandler func(conn Connection, p Packet)
+type ErrorHandler func(conn Connection, err error)
+type CloseHandler func(serv Server)
 
 type Server struct {
-	connections       []net.Conn
+	connections       []Connection
+	serv              *http.Server
+	port              string
+	readyHandler      *ReadyHandler
 	connectHandler    *ConnectHandler
 	disconnectHandler *DisconnectHandler
 	packetHandler     *PacketHandler
@@ -25,24 +28,26 @@ type Server struct {
 	closeHandler      *CloseHandler
 }
 
-func (s Server) Listen(port string) {
-	// init http server on provided port
-	http.ListenAndServe(":"+port, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+func (s Server) Listen(port string) error {
+	var handler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// upgrade http request to websocket
 		conn, _, _, err := ws.UpgradeHTTP(r, w)
 		if err != nil {
-			// handle connection error
+			// TODO: handle connection error
 			fmt.Fprintln(os.Stderr, err)
+			return
 		}
 		// add new connection to list
-		s.connections = append(s.connections, conn)
+		c := *NewConnection(conn, s)
+		s.connections = append(s.connections, c)
 		// call connect handler
 		if s.connectHandler != nil {
-			(*s.connectHandler)(conn)
+			(*s.connectHandler)(c)
 		}
 		//fmt.Println("Client Connected")
 
 		// start goroutine to handle connection
+		// TODO: communicate with these routines via channels
 		go func() {
 			defer conn.Close() // close connection on goroutine exit
 
@@ -60,32 +65,52 @@ func (s Server) Listen(port string) {
 				// call packet handler
 				if s.packetHandler != nil {
 					var handler = *(s.packetHandler)
-					handler(conn, *packet)
+					handler(c, *packet)
 				}
 			}
 		}()
-	}))
-}
+	})
 
-func (s Server) Write(conn net.Conn, p Packet) {
-	msg := p.Build()
-	err := wsutil.WriteServerMessage(conn, ws.OpBinary, msg)
-	if err != nil {
-		// handle write error
-		fmt.Fprintln(os.Stderr, err)
+	// init http server on provided port
+	p := ":" + port
+	serv := &http.Server{
+		Addr:    p,
+		Handler: handler,
 	}
-	//fmt.Println("sending: ", msg)
-}
-
-func (s Server) Broadcast(p Packet) {
-	// loop through all connections and send message
-	for _, conn := range s.connections {
-		err := wsutil.WriteServerMessage(conn, ws.OpBinary, p.Build())
-		if err != nil {
-			// handle write error
-			fmt.Fprintln(os.Stderr, err)
+	err := s.serv.ListenAndServe()
+	if err == nil {
+		//fmt.Println("Server started on port: ", port)
+		s.port = p
+		s.serv = serv
+		// call ready handler
+		if s.readyHandler != nil {
+			(*s.readyHandler)(s)
 		}
 	}
+	return err
+}
+
+func (s Server) Broadcast(p Packet) error {
+	// loop through all connections and send message
+	for _, c := range s.connections {
+		err := wsutil.WriteServerMessage(c.conn, ws.OpBinary, p.Build())
+		return err
+	}
+	return nil // no error
+}
+
+func (s Server) Close() {
+	// loop through all connections and close
+	for _, c := range s.connections {
+		c.conn.Close()
+	}
+	// close server
+	s.serv.Close()
+	// call close handler
+	if s.closeHandler != nil {
+		(*s.closeHandler)(s)
+	}
+	//fmt.Println("Server closed")
 }
 
 func (s *Server) OnConnect(handler ConnectHandler) {

@@ -98,11 +98,7 @@ func (s Server) Listen(port string) error {
 func (s Server) Broadcast(p Packet) error {
 	// loop through all connections and send message
 	for _, c := range s.connections {
-		b, err := p.Build()
-		if err != nil {
-			return err
-		}
-		err = wsutil.WriteServerMessage(c.conn, ws.OpBinary, b)
+		err := c.Write(p)
 		if err != nil {
 			return err
 		}

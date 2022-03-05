@@ -104,7 +104,7 @@ func BytesFromData(data interface{}) []byte {
 }
 
 func DetermineType(data interface{}) int {
-	switch data.(type) {
+	switch data := data.(type) {
 	case bool:
 		return 0 // u8
 	case uint8:
@@ -120,9 +120,8 @@ func DetermineType(data interface{}) int {
 	case int32:
 		return 5 // s32
 	case int:
-		val := data.(int)
-		absVal := math.Abs(float64(val))
-		if val < 0 {
+		absVal := math.Abs(float64(data))
+		if data < 0 {
 			// signed
 			if absVal <= 127 {
 				return 3 // s8
@@ -132,9 +131,9 @@ func DetermineType(data interface{}) int {
 			return 5 // s32
 		} else {
 			// unsigned
-			if val <= 255 {
+			if data <= 255 {
 				return 0 // u8
-			} else if val <= 65535 {
+			} else if data <= 65535 {
 				return 1 // u16
 			}
 			return 2 // u32

@@ -30,8 +30,6 @@ type Server struct {
 
 func (s *Server) Listen(port string) error {
 	var handler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		defer s.Close() // close server once handler exits
-
 		// upgrade http request to websocket
 		conn, _, _, err := ws.UpgradeHTTP(r, w)
 		if err != nil {
@@ -58,7 +56,7 @@ func (s *Server) Listen(port string) error {
 				msg, _, readErr := wsutil.ReadClientData(conn)
 				if readErr != nil {
 					// handle read error
-					fmt.Fprintln(os.Stderr, err)
+					//fmt.Fprintln(os.Stderr, err)
 					break
 				}
 				//fmt.Println("received: ", msg)

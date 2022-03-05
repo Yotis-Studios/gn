@@ -116,7 +116,6 @@ func (s Server) Close() {
 	if s.closeHandler != nil {
 		(*s.closeHandler)(s)
 	}
-	//fmt.Println("Server closed")
 }
 
 func (s *Server) OnReady(handler ReadyHandler) {

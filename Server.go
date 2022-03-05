@@ -28,7 +28,7 @@ type Server struct {
 	closeHandler      *CloseHandler
 }
 
-func (s Server) Listen(port string) error {
+func (s *Server) Listen(port string) error {
 	var handler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// upgrade http request to websocket
 		conn, _, _, err := ws.UpgradeHTTP(r, w)
@@ -38,7 +38,7 @@ func (s Server) Listen(port string) error {
 			return
 		}
 		// add new connection to list
-		c := *NewConnection(conn, s)
+		c := *NewConnection(conn, *s)
 		s.connections = append(s.connections, c)
 		// call connect handler
 		if s.connectHandler != nil {
@@ -82,14 +82,14 @@ func (s Server) Listen(port string) error {
 		Addr:    p,
 		Handler: handler,
 	}
-	err := s.serv.ListenAndServe()
+	err := serv.ListenAndServe()
 	if err == nil {
 		//fmt.Println("Server started on port: ", port)
 		s.port = p
 		s.serv = serv
 		// call ready handler
 		if s.readyHandler != nil {
-			(*s.readyHandler)(s)
+			(*s.readyHandler)(*s)
 		}
 	}
 	return err

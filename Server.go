@@ -30,6 +30,8 @@ type Server struct {
 
 func (s *Server) Listen(port string) error {
 	var handler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		defer s.Close() // close server once handler exits
+
 		// upgrade http request to websocket
 		conn, _, _, err := ws.UpgradeHTTP(r, w)
 		if err != nil {
@@ -118,6 +120,10 @@ func (s Server) Close() {
 		(*s.closeHandler)(s)
 	}
 	//fmt.Println("Server closed")
+}
+
+func (s *Server) OnReady(handler ReadyHandler) {
+	s.readyHandler = &handler
 }
 
 func (s *Server) OnConnect(handler ConnectHandler) {

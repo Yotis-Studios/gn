@@ -42,5 +42,8 @@ func (c Connection) Close() error {
 			c.serv.connections = conns[:n]
 		}
 	}
+	if c.serv.disconnectHandler != nil {
+		(*c.serv.disconnectHandler)(c)
+	}
 	return c.conn.Close()
 }

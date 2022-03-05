@@ -49,7 +49,7 @@ func (s *Server) Listen(port string) error {
 		// start goroutine to handle connection
 		// TODO: communicate with these routines via channels
 		go func() {
-			defer conn.Close() // close connection on goroutine exit
+			defer c.Close() // close connection on goroutine exit
 
 			// loop and read data until an error is encountered
 			for {

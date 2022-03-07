@@ -71,7 +71,6 @@ func (p Packet) Build() ([]byte, error) {
 
 func Load(b []byte) (*Packet, error) {
 	p := new(Packet)
-	p.raw = b
 	r := bytes.NewReader(b)
 	// read packet net id
 	err := binary.Read(r, binary.LittleEndian, &p.netID)
@@ -91,6 +90,15 @@ func Load(b []byte) (*Packet, error) {
 			j += size + 1
 		}
 	}
+
+	// set raw data
+	var pBuf = new(bytes.Buffer)
+	err = binary.Write(pBuf, binary.LittleEndian, uint16(len(b)))
+	if err != nil {
+		return nil, err
+	}
+	pBuf.Write(b)
+	p.raw = pBuf.Bytes()
 
 	return p, nil
 }

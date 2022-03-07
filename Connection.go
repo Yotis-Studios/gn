@@ -8,8 +8,10 @@ import (
 )
 
 type Connection struct {
-	conn net.Conn
-	serv Server
+	conn    net.Conn
+	serv    Server
+	pBuffer []byte
+	pIdx    int
 }
 
 func NewConnection(conn net.Conn, serv Server) *Connection {

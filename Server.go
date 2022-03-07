@@ -1,6 +1,7 @@
 package gn
 
 import (
+	"encoding/binary"
 	"net/http"
 
 	"github.com/gobwas/ws"
@@ -59,18 +60,44 @@ func (s *Server) Listen(port string) error {
 					}
 					break
 				}
-				// parse message
-				packet, parseErr := Load(msg)
-				if parseErr != nil {
-					// handle parse error
-					if s.errorHandler != nil {
-						(*s.errorHandler)(ServerError{parseErr, &c, s})
+
+				dataSize := len(msg)
+				availableData := dataSize
+				for availableData > 0 {
+					if c.pBuffer == nil {
+						packetSize := binary.LittleEndian.Uint16(msg[0:2])
+						availableData -= 2
+						c.pBuffer = make([]byte, packetSize)
+						c.pIdx = 0
 					}
-					break
-				}
-				// call packet handler
-				if s.packetHandler != nil {
-					(*s.packetHandler)(c, *packet)
+
+					pBufLen := len(c.pBuffer)
+					remainingData := pBufLen - c.pIdx
+					copySize := remainingData
+					if availableData < remainingData {
+						copySize = availableData
+					}
+					copyIdx := dataSize - availableData
+					copy(c.pBuffer[c.pIdx:], msg[copyIdx:copyIdx+copySize])
+					c.pIdx += copySize
+					availableData -= copySize
+					if c.pIdx == pBufLen {
+						// parse packet
+						packet, parseErr := Load(c.pBuffer)
+						if parseErr != nil {
+							// handle parse error
+							if s.errorHandler != nil {
+								(*s.errorHandler)(ServerError{parseErr, &c, s})
+							}
+							break
+						}
+						// call packet handler
+						if s.packetHandler != nil {
+							(*s.packetHandler)(c, *packet)
+						}
+						// reset packet buffer
+						c.pBuffer = nil
+					}
 				}
 			}
 		}()

@@ -40,7 +40,7 @@ func BytesFromData(data interface{}) ([]byte, error) {
 			return nil, err
 		}
 		// write null terminator
-		//err = binary.Write(buf, binary.LittleEndian, uint8(0))
+		err = binary.Write(buf, binary.LittleEndian, uint8(0))
 	} else if typeName == "buffer" {
 		// Buffer array
 		arr := data.([]byte)
@@ -219,7 +219,7 @@ func Parse(r io.Reader) (value interface{}, size int, err error) {
 	if typeName == "string" {
 		str := string(value.([]byte))
 		value = str
-		size = len(str) + 2 // FIXME: includes size byte and null terminator?
+		size = len(str) + 2
 	} else if typeName == "buffer" {
 		size = len(value.([]byte)) + 1
 	} else {
@@ -228,6 +228,7 @@ func Parse(r io.Reader) (value interface{}, size int, err error) {
 
 	if typeName == "f32" {
 		flt := value.(float32)
+		// Go forces us to use 64 bit floats, so we have to convert
 		value = math.Round(float64(flt)*100) / 100
 	}
 

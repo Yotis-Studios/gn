@@ -65,7 +65,8 @@ func (s *Server) Listen(port string) error {
 				availableData := dataSize
 				for availableData > 0 {
 					if c.pBuffer == nil {
-						packetSize := binary.LittleEndian.Uint16(msg[0:2])
+						packetStartIdx := dataSize - availableData
+						packetSize := binary.LittleEndian.Uint16(msg[packetStartIdx : packetStartIdx+2])
 						availableData -= 2
 						c.pBuffer = make([]byte, packetSize)
 						c.pIdx = 0

@@ -45,7 +45,7 @@ func (c Connection) Close() error {
 		}
 	}
 	if c.serv.disconnectHandler != nil {
-		(*c.serv.disconnectHandler)(c)
+		c.serv.disconnectHandler(c)
 	}
 	return c.conn.Close()
 }

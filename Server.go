@@ -19,12 +19,12 @@ type Server struct {
 	connections       []Connection
 	serv              *http.Server
 	port              string
-	readyHandler      *ReadyHandler
-	connectHandler    *ConnectHandler
-	disconnectHandler *DisconnectHandler
-	packetHandler     *PacketHandler
-	errorHandler      *ErrorHandler
-	closeHandler      *CloseHandler
+	readyHandler      ReadyHandler
+	connectHandler    ConnectHandler
+	disconnectHandler DisconnectHandler
+	packetHandler     PacketHandler
+	errorHandler      ErrorHandler
+	closeHandler      CloseHandler
 }
 
 func (s *Server) Listen(port string) error {
@@ -33,16 +33,16 @@ func (s *Server) Listen(port string) error {
 		conn, _, _, err := ws.UpgradeHTTP(r, w)
 		if err != nil {
 			if s.errorHandler != nil {
-				(*s.errorHandler)(ServerError{err, nil, s})
+				s.errorHandler(ServerError{err, nil, s})
 			}
 			return
 		}
 		// add new connection to list
-		c := *NewConnection(conn, *s)
+		c := &NewConnection(conn, *s)
 		s.connections = append(s.connections, c)
 		// call connect handler
 		if s.connectHandler != nil {
-			(*s.connectHandler)(c)
+			s.connectHandler(c)
 		}
 
 		// start goroutine to handle connection
@@ -56,7 +56,7 @@ func (s *Server) Listen(port string) error {
 				if readErr != nil {
 					// handle read error
 					if s.errorHandler != nil {
-						(*s.errorHandler)(ServerError{readErr, &c, s})
+						s.errorHandler(ServerError{readErr, &c, s})
 					}
 					break
 				}
@@ -88,13 +88,13 @@ func (s *Server) Listen(port string) error {
 						if parseErr != nil {
 							// handle parse error
 							if s.errorHandler != nil {
-								(*s.errorHandler)(ServerError{parseErr, &c, s})
+								s.errorHandler(ServerError{parseErr, &c, s})
 							}
 							break
 						}
 						// call packet handler
 						if s.packetHandler != nil {
-							(*s.packetHandler)(c, *packet)
+							s.packetHandler(c, *packet)
 						}
 						// reset packet buffer
 						c.pBuffer = nil
@@ -116,7 +116,7 @@ func (s *Server) Listen(port string) error {
 		s.serv = serv
 		// call ready handler
 		if s.readyHandler != nil {
-			(*s.readyHandler)(*s)
+			s.readyHandler(*s)
 		}
 	}
 	return err
@@ -142,30 +142,30 @@ func (s Server) Close() {
 	s.serv.Close()
 	// call close handler
 	if s.closeHandler != nil {
-		(*s.closeHandler)(s)
+		s.closeHandler(s)
 	}
 }
 
 func (s *Server) OnReady(handler ReadyHandler) {
-	s.readyHandler = &handler
+	s.readyHandler = handler
 }
 
 func (s *Server) OnConnect(handler ConnectHandler) {
-	s.connectHandler = &handler
+	s.connectHandler = handler
 }
 
 func (s *Server) OnDisconnect(handler DisconnectHandler) {
-	s.disconnectHandler = &handler
+	s.disconnectHandler = handler
 }
 
 func (s *Server) OnData(handler PacketHandler) {
-	s.packetHandler = &handler
+	s.packetHandler = handler
 }
 
 func (s *Server) OnError(handler ErrorHandler) {
-	s.errorHandler = &handler
+	s.errorHandler = handler
 }
 
 func (s *Server) OnClose(handler CloseHandler) {
-	s.closeHandler = &handler
+	s.closeHandler = handler
 }

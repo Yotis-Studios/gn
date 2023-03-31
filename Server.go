@@ -16,7 +16,7 @@ type ErrorHandler func(ServerError)
 type CloseHandler func(Server)
 
 type Server struct {
-	connections       []Connection
+	connections       []*Connection
 	serv              *http.Server
 	port              string
 	readyHandler      ReadyHandler
@@ -38,11 +38,11 @@ func (s *Server) Listen(port string) error {
 			return
 		}
 		// add new connection to list
-		c := &NewConnection(conn, *s)
+		c := NewConnection(conn, *s)
 		s.connections = append(s.connections, c)
 		// call connect handler
 		if s.connectHandler != nil {
-			s.connectHandler(c)
+			s.connectHandler(*c)
 		}
 
 		// start goroutine to handle connection
@@ -56,7 +56,7 @@ func (s *Server) Listen(port string) error {
 				if readErr != nil {
 					// handle read error
 					if s.errorHandler != nil {
-						s.errorHandler(ServerError{readErr, &c, s})
+						s.errorHandler(ServerError{readErr, c, s})
 					}
 					break
 				}
@@ -88,13 +88,13 @@ func (s *Server) Listen(port string) error {
 						if parseErr != nil {
 							// handle parse error
 							if s.errorHandler != nil {
-								s.errorHandler(ServerError{parseErr, &c, s})
+								s.errorHandler(ServerError{parseErr, c, s})
 							}
 							break
 						}
 						// call packet handler
 						if s.packetHandler != nil {
-							s.packetHandler(c, *packet)
+							s.packetHandler(*c, *packet)
 						}
 						// reset packet buffer
 						c.pBuffer = nil
